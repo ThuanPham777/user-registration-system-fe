@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { loginUser } from '@/lib/api';
+import { setAccessToken, persistRefreshInfo } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,10 +35,10 @@ export default function Login() {
     const mutation = useMutation({
         mutationFn: loginUser,
         onSuccess: (data: any) => {
-            // Store token in localStorage
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            // Navigate to home page
+            // Store access in memory; persist refresh & user
+            setAccessToken(data.accessToken);
+            persistRefreshInfo(data.user, data.refreshToken);
+            // Navigate to home
             navigate('/');
         },
         onError: (err: any) => {

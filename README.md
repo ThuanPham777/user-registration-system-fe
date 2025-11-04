@@ -1,66 +1,65 @@
-# User Registration System - Frontend
+# User Registration System
 
-A modern React-based user registration and authentication system built with TypeScript, Tailwind CSS, and shadcn/ui.
-
+Short guide to set up, run, and access the project (frontend + backend).
 
 ## Prerequisites
 
 - Node.js 20.19+ or 22.12+
-- npm or yarn
+- npm (or yarn/pnpm)
+- MongoDB instance/connection string
 
-## Installation
+## Backend (NestJS)
 
-1. Navigate to the frontend directory:
+1) Install deps
 ```bash
-cd user-registration-system-fe
-```
-
-2. Install dependencies:
-```bash
+cd user-registration-be
 npm install
 ```
 
-## Running the Application
+2) Environment (.env in `user-registration-be`)
+```env
+MONGODB_URI=mongodb://localhost:27017/user-registration
+JWT_ACCESS_SECRET=replace-with-strong-secret
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_EXPIRES=7d
+CORS_ORIGIN=http://localhost:5173
+PORT=4000
+```
 
-Start the development server:
+3) Run backend
+```bash
+npm run start:dev
+```
+API will run at `http://localhost:4000`.
 
+## Frontend (React + Vite)
+
+1) Install deps
+```bash
+cd user-registration-system-fe
+npm install
+```
+
+2) Environment (.env in `user-registration-system-fe`)
+```env
+VITE_API_BASE_URL=http://localhost:4000
+```
+
+3) Run frontend
 ```bash
 npm run dev
 ```
+App will be available at `http://localhost:5173`.
 
-The application will be available at `http://localhost:5173`
+## Access
 
-## Configuration
+- Public URL: `https://user-registration-system-fe.vercel.app/`
+- Local development:
+  - Frontend: `http://localhost:5173`
+  - Backend API: `http://localhost:4000`
 
-The API base URL is configured in `src/lib/api.ts`. By default, it connects to:
-```
-http://localhost:3000
-```
+## App Pages
 
-Make sure the backend server is running on this port.
-
-
-### Home Page (`/`)
-- Landing page with call-to-action for guest users
-- User dashboard for authenticated users
-- Navigation to Login and Sign Up pages
-
-### Login Page (`/login`)
-- Email and password authentication
-- Form validation
-- Error handling
-- Redirects to home on success
-
-### Sign Up Page (`/signup`)
-- User registration with email and password
-- Form validation
-- Success/error feedback
-- Redirects to home on success
-
-## Environment Setup
-
-Create a `.env` file (optional) to configure the application:
-
-```env
-VITE_API_BASE_URL=http://localhost:3000
-```
+- Home (`/`): Guest view by default; shows user info when logged in
+- Login (`/login`): Sign in; redirects to Home on success
+- Sign Up (`/signup`): Create account; redirects to Home on success

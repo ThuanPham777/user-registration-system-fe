@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { logoutUser } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { useMutation } from '@tanstack/react-query';
+import { clearAllAuth } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, LogOut, Shield, Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
 
@@ -12,12 +15,12 @@ interface UserData {
 export default function Home() {
     const navigate = useNavigate();
     const [user, setUser] = useState<UserData | null>(null);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-
-        if (userStr && token) {
+        if (userStr) {
             try {
                 const userData = JSON.parse(userStr);
                 setUser(userData);
@@ -27,12 +30,34 @@ export default function Home() {
         }
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        navigate('/', { replace: true });
-    };
+    // Close popup on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const logoutMutation = useMutation({
+        mutationFn: async () => {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return;
+            const { _id } = JSON.parse(userStr);
+            await logoutUser(_id);
+        },
+        onSettled: () => {
+            clearAllAuth();
+            setUser(null);
+            navigate('/login', { replace: true });
+        },
+    });
+
+    const handleLogout = () => logoutMutation.mutate();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -46,15 +71,44 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-4">
                             {user ? (
-                                <>
-                                    <span className="text-sm text-muted-foreground hidden md:block">
-                                        {user.email}
-                                    </span>
-                                    <Button onClick={handleLogout} variant="outline" size="sm" className="gap-2">
-                                        <LogOut className="h-4 w-4" />
-                                        Logout
-                                    </Button>
-                                </>
+                                <div className="relative" ref={userMenuRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsUserMenuOpen((o) => !o)}
+                                        className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                                        aria-label="User menu"
+                                    >
+                                        <img
+                                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&size=64`}
+                                            alt="User avatar"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </button>
+
+                                    {isUserMenuOpen && (
+                                        <div className="absolute right-0 mt-2 w-64 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-4 z-50">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                    <img
+                                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&size=64`}
+                                                        alt="User avatar"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold truncate">{user.email}</p>
+                                                    <p className="text-[11px] text-muted-foreground truncate">ID: {user._id}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3">
+                                                <Button onClick={handleLogout} variant="outline" size="sm" className="w-full justify-start gap-2">
+                                                    <LogOut className="h-4 w-4" />
+                                                    Logout
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <>
                                     <Link to="/login">
