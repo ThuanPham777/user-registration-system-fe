@@ -35,8 +35,8 @@ apiClient.interceptors.response.use(
         const url: string = originalRequest?.url ?? '';
         // Do not try to refresh for auth endpoints themselves
         const isAuthEndpoint =
-            url.includes('/auth/refresh') ||
-            url.includes('/auth/login') ||
+            url.includes('/user/refresh') ||
+            url.includes('/user/login') ||
             url.includes('/user/logout') ||
             url.includes('/user/register');
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -113,13 +113,13 @@ export const registerUser = async (data: RegisterData): Promise<RegisterResponse
 };
 
 export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', data);
+    const response = await apiClient.post<LoginResponse>('/user/login', data);
     return response.data;
 };
 
 export const refreshToken = async (refreshToken: string) => {
     const response = await apiClient.post<{ status: 'success'; message: string; accessToken: string; refreshToken: string }>(
-        '/auth/refresh',
+        '/user/refresh',
         { refreshToken },
     );
     return response.data;
